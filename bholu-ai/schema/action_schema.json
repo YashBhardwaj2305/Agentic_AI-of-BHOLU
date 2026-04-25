@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ActionPlan",
+  "type": "object",
+  "required": [
+    "actions"
+  ],
+  "properties": {
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "summarize",
+              "label",
+              "archive",
+              "reply"
+            ]
+          },
+          "email_id": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string",
+            "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+          },
+          "body": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "if": {
+          "properties": {
+            "type": {
+              "const": "reply"
+            }
+          }
+        },
+        "then": {
+          "required": [
+            "to",
+            "body"
+          ]
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

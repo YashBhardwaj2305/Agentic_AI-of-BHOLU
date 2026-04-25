@@ -1,0 +1,31 @@
+# Gmail OAuth credentials — NEVER commit these
+credentials.json
+token.json
+
+# Log files generated at runtime
+execution_log.txt
+rejected_plans.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
