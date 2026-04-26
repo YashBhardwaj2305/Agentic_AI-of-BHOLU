@@ -24,7 +24,7 @@
             ]
           },
           "email_id": {
-            "type": "string"
+            "type": ["string", "integer"]
           },
           "note": {
             "type": "string"
