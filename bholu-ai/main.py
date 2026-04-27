@@ -184,15 +184,17 @@ def print_plan(plan, mode: str) -> None:
     console.print()
 
 
-def print_summary(result: ExecutionResult, emails_count: int) -> None:
+def print_summary(result: ExecutionResult, emails_count: int, plan=None) -> None:
     result.emails_processed = emails_count
+    actions = plan.actions if plan else []
 
     if result.mode == "secure":
         status = "[bold green]SECURE — Attack Blocked[/bold green]" if result.actions_blocked > 0 else "[bold green]SECURE — Normal Execution[/bold green]"
         border = "green"
     else:
-        status = "[bold red]VULNERABLE — Attack Succeeded[/bold red]" if result.actions_executed > 0 else "[bold yellow]VULNERABLE — No Actions[/bold yellow]"
-        border = "red"
+        injected_executed = any(a.get("type") not in ALLOWED_ACTION_TYPES for a in actions)
+        status = "[bold red]VULNERABLE — Attack Succeeded[/bold red]" if injected_executed else "[bold yellow]VULNERABLE — Normal Execution (no injection detected)[/bold yellow]"
+        border = "red" if injected_executed else "yellow"
 
     table = Table(box=box.SIMPLE, show_header=False)
     table.add_column("Field", style="bold")
@@ -216,12 +218,19 @@ def print_summary(result: ExecutionResult, emails_count: int) -> None:
             "\n[bold green]✓ The Dual-Agent framework successfully neutralized the attack.[/bold green]\n"
             "[green]  The Planner was hijacked, but the Executor's schema wall stopped execution.[/green]\n"
         )
-    elif result.mode == "vulnerable" and result.actions_executed > 0:
-        console.print(
-            "\n[bold red]✗ The single-agent system was hijacked.[/bold red]\n"
-            "[red]  Without the schema wall, the injected instructions executed.[/red]\n"
-            "[dim]  (All execution was mock — no real actions were taken)[/dim]\n"
-        )
+    elif result.mode == "vulnerable":
+        injected = any(a.get("type") not in ALLOWED_ACTION_TYPES for a in actions)
+        if injected:
+            console.print(
+                "\n[bold red]✗ The single-agent system was hijacked.[/bold red]\n"
+                "[red]  Without the schema wall, the injected instructions executed.[/red]\n"
+                "[dim]  (All execution was mock — no real actions were taken)[/dim]\n"
+            )
+        else:
+            console.print(
+                "\n[bold yellow]ℹ No injection detected in this run.[/bold yellow]\n"
+                "[dim]  Send yourself the poisoned email from samples/poisoned_email.txt to trigger the attack.[/dim]\n"
+            )
 
 
 def main() -> None:
@@ -276,7 +285,7 @@ def main() -> None:
     result = executor.execute(plan=plan, console=console)
 
     # --- Final summary ---
-    print_summary(result, len(emails))
+    print_summary(result, len(emails), plan)
 
 
 if __name__ == "__main__":
