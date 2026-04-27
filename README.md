@@ -33,9 +33,26 @@ User Intent
 
 All execution is **mock only** — actions are logged to files, nothing destructive ever happens to your real email.
 
+> **Safety note:** Even in vulnerable mode, no email is ever forwarded, deleted, or sent. The Executor only writes to a local log file. Your Gmail inbox is never modified — the API is read-only.
+
 ---
 
-## Project Structure
+## What is Real vs Mock
+
+| Component | Real or Mock? |
+|---|---|
+| Reading your Gmail inbox | **REAL** — actual emails via Gmail API |
+| LLM reasoning about emails | **REAL** — llama3 actually processes the content |
+| Prompt injection confusing the LLM | **REAL** — the LLM genuinely gets hijacked |
+| Schema wall blocking the plan | **REAL** — jsonschema deterministically validates |
+| Forwarding emails to attacker | **MOCK** — logged to `execution_log.txt` only |
+| Exfiltrating credentials | **MOCK** — logged to file, no network call made |
+| Deleting or archiving emails | **MOCK** — Gmail write API is never called |
+| Any change to your inbox | **NEVER** — Gmail scope is read-only |
+
+The Gmail API token only has `gmail.readonly` permission. Even if the code tried to send or delete, Google would reject it.
+
+---
 
 ```
 bholu-ai/
@@ -138,8 +155,10 @@ python main.py --model llama3 --mode vulnerable
 - Bholu reads the invoice
 - LLM gets hijacked by the hidden injection text
 - Planner produces `forward` and `exfiltrate` actions targeting `attacker@evil.com`
-- Red warning: **⚡ HIJACKED ACTION DETECTED**
-- Executor runs it — no wall to stop it
+- Red warning: **HIJACKED ACTION DETECTED**
+- Executor "runs" it — logs it to `execution_log.txt` (no real email is sent)
+
+**Important:** Nothing actually gets forwarded or sent. The Executor only writes to a local log file. This is a controlled demonstration of what *would* happen in a real unprotected system.
 
 **Say:** *"The LLM cannot tell the difference between your instruction and the attacker's instruction hidden in the email. This is context window flattening — everything gets merged into one flat sequence of tokens."*
 
@@ -157,7 +176,7 @@ python main.py --model llama3 --mode secure
 - Same emails fetched
 - Planner still gets hijacked — produces the same malicious plan
 - Plan hits the JSON Schema wall
-- Big red box: **⚠ INJECTION ALERT — PLAN REJECTED**
+- Big red box: **INJECTION ALERT — PLAN REJECTED**
 - 0 actions executed, all blocked
 - Summary: "Attack blocked deterministically"
 
